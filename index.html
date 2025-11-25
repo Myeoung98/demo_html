@@ -16,9 +16,10 @@
       
       
       
+     
       <script>
       !(function () {
-        const livechatUrl = 'https://portal-sop-stg.fpt.vn/livechat-service/widget.css';
+        const livechatUrl = 'https://portal-sop-uat.fpt.vn/livechat-service/widget.css';
         document
           .getElementsByTagName("head")[0]
           .insertAdjacentHTML(
@@ -27,14 +28,15 @@
           );
         const e = document.createElement("div");
         e.setAttribute("id", "livechat-sop"), document.body.appendChild(e);
-        localStorage.setItem('sop_id', '277');
+        localStorage.setItem('sop_id', '36');
         const t = document.createElement("script");
         t.setAttribute("type", "module"),
           t.setAttribute("crossorigin", ""),
-          (t.src = "https://portal-sop-stg.fpt.vn/livechat-service/Widget.js"),
+          (t.src = "https://portal-sop-uat.fpt.vn/livechat-service/Widget.js"),
           document.body.appendChild(t);
       })();
     </script>
+    
     
     
     
