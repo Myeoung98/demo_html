@@ -1,0 +1,1205 @@
+<title>KB Management API — HPCN AgenticAI</title>
+
+<style>
+:root {
+  --ground: #F0F4F9;
+  --surface: #FFFFFF;
+  --surface-2: #F8FAFC;
+  --text: #0C1B33;
+  --text-2: #445E7A;
+  --text-3: #8099B4;
+  --accent: #1D4ED8;
+  --accent-bg: #EFF6FF;
+  --green: #059669;
+  --green-bg: #ECFDF5;
+  --amber: #92400E;
+  --amber-bg: #FEF3C7;
+  --red: #B91C1C;
+  --red-bg: #FEF2F2;
+  --border: #CBD5E1;
+  --border-light: #E2E8F0;
+  --code-bg: #0F172A;
+  --code-text: #CBD5E1;
+  --sidebar-w: 264px;
+  --top-h: 52px;
+  --mono: 'Cascadia Code','Fira Code','JetBrains Mono',Menlo,Monaco,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--ground);color:var(--text);font-size:14px;line-height:1.6}
+
+/* ── Topbar ── */
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--top-h);background:#0C1B33;display:flex;align-items:center;padding:0 20px;gap:16px;z-index:100;border-bottom:1px solid #1e3255}
+.topbar-logo{font-size:13px;font-weight:700;letter-spacing:.12em;color:#fff;text-transform:uppercase}
+.topbar-logo span{color:#60A5FA;margin-left:6px}
+.topbar-base{font-family:var(--mono);font-size:11px;color:#8099B4;background:#1A2F4A;padding:3px 10px;border-radius:4px;letter-spacing:.02em}
+.topbar-version{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.08em;color:#4A6080;text-transform:uppercase}
+
+/* ── Layout ── */
+.layout{display:flex;margin-top:var(--top-h);min-height:calc(100vh - var(--top-h))}
+
+/* ── Sidebar ── */
+.sidebar{width:var(--sidebar-w);flex-shrink:0;position:sticky;top:var(--top-h);height:calc(100vh - var(--top-h));overflow-y:auto;background:#0C1B33;padding:16px 0 40px;scrollbar-width:thin;scrollbar-color:#1e3255 transparent}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{background:#1e3255;border-radius:2px}
+.sb-group{margin-bottom:4px}
+.sb-label{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#445E7A;padding:10px 16px 4px;display:block}
+.sb-item{display:flex;align-items:center;gap:7px;padding:6px 16px;text-decoration:none;color:#8099B4;font-family:var(--mono);font-size:11px;border-left:2px solid transparent;transition:all .12s;cursor:pointer;white-space:nowrap;overflow:hidden}
+.sb-item:hover{color:#CBD5E1;background:rgba(255,255,255,.04);border-left-color:#2563EB}
+.sb-item.active{color:#93C5FD;background:rgba(29,78,216,.15);border-left-color:#3B82F6}
+.sb-item .mb{font-size:8.5px;font-weight:700;padding:2px 5px;border-radius:3px;flex-shrink:0;letter-spacing:.05em}
+.sb-item .mb.get{background:#1e3a6e;color:#60A5FA}
+.sb-item .mb.post{background:#064e3b;color:#34D399}
+.sb-item .mb.put{background:#451a03;color:#FCD34D}
+.sb-item .mb.del{background:#450a0a;color:#FCA5A5}
+.sb-item .sp{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.sb-divider{height:1px;background:#1e3255;margin:8px 16px}
+
+/* ── Main content ── */
+.main{flex:1;min-width:0;padding:32px 40px 80px}
+.section-header{margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-eyebrow{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.section-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.section-subtitle{font-size:13px;color:var(--text-2);margin-top:4px}
+
+/* ── Overview cards ── */
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px}
+.ov-card{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:16px}
+.ov-card-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+.header-row{display:flex;gap:8px;align-items:baseline;margin-bottom:6px;flex-wrap:wrap}
+.header-name{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);background:#F1F5F9;padding:2px 7px;border-radius:4px;border:1px solid var(--border-light)}
+.header-req{font-size:10px;font-weight:600;color:var(--red);letter-spacing:.06em;text-transform:uppercase}
+.header-opt{font-size:10px;color:var(--text-3)}
+.header-desc{font-size:12px;color:var(--text-2);margin-left:4px}
+
+.status-flow{display:flex;align-items:center;gap:8px;margin-top:8px}
+.status-pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;letter-spacing:.04em}
+.status-pill.pending{background:var(--amber-bg);color:var(--amber)}
+.status-pill.active{background:var(--green-bg);color:var(--green)}
+.flow-arrow{color:var(--text-3);font-size:14px}
+.flow-note{font-size:11px;color:var(--text-3);margin-top:6px}
+
+.dtype-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.dtype-row{display:flex;gap:6px;align-items:center;font-size:12px}
+.dtype-tag{font-family:var(--mono);font-size:10px;background:var(--surface-2);border:1px solid var(--border-light);padding:1px 6px;border-radius:3px;color:var(--text-2)}
+
+/* ── Endpoint card ── */
+.ep-card{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;margin-bottom:16px;overflow:hidden}
+.ep-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border-light);flex-wrap:wrap}
+.method-badge{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.07em;padding:4px 10px;border-radius:4px;flex-shrink:0;text-transform:uppercase}
+.method-badge.get{background:var(--accent);color:#fff}
+.method-badge.post{background:var(--green);color:#fff}
+.method-badge.put{background:#D97706;color:#fff}
+.method-badge.del{background:var(--red);color:#fff}
+.ep-path{font-family:var(--mono);font-size:13px;color:var(--text);flex:1;min-width:0}
+.ep-path em{color:var(--accent);font-style:normal}
+.us-tag{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border-light);padding:3px 8px;border-radius:4px;margin-left:auto}
+.ep-desc{padding:12px 18px;font-size:13px;color:var(--text-2);border-bottom:1px solid var(--border-light);line-height:1.55}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border-light);background:var(--surface-2)}
+.tab-btn{font-size:12px;font-weight:600;padding:8px 16px;border:none;background:none;cursor:pointer;color:var(--text-3);border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.02em;transition:all .1s}
+.tab-btn:hover{color:var(--text-2)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-pane{display:none;padding:16px 18px}
+.tab-pane.active{display:block}
+
+/* ── Param table ── */
+.param-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.param-table th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:0 10px 8px 0;border-bottom:1px solid var(--border-light)}
+.param-table td{padding:7px 10px 7px 0;border-bottom:1px solid var(--border-light);vertical-align:top}
+.param-table tr:last-child td{border-bottom:none}
+.param-name{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
+.param-req{color:var(--red);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.param-type{font-family:var(--mono);font-size:11px;color:var(--text-3);background:var(--surface-2);padding:1px 5px;border-radius:3px;border:1px solid var(--border-light)}
+.param-desc{color:var(--text-2);font-size:12px}
+.param-default{font-family:var(--mono);font-size:11px;color:var(--text-3)}
+
+/* ── Code block ── */
+.code-wrap{position:relative;border-radius:6px;overflow:hidden;margin:4px 0}
+.code-lang{position:absolute;top:8px;left:12px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#445E7A}
+.copy-btn{position:absolute;top:8px;right:10px;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;background:#1e3255;color:#8099B4;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all .12s}
+.copy-btn:hover{background:#1D4ED8;color:#fff}
+.copy-btn.copied{background:#059669;color:#fff}
+pre.code-pre{background:var(--code-bg);color:var(--code-text);font-family:var(--mono);font-size:12px;line-height:1.6;padding:32px 14px 14px;overflow-x:auto;margin:0;white-space:pre}
+.kw{color:#7DD3FC}.str{color:#86EFAC}.num{color:#FCD34D}.key{color:#C4B5FD}.cmt{color:#475569}
+.note-box{background:var(--accent-bg);border:1px solid #BFDBFE;border-radius:6px;padding:10px 14px;font-size:12.5px;color:var(--text-2);line-height:1.55}
+.note-box.warn{background:var(--amber-bg);border-color:#FDE68A;color:var(--amber)}
+.note-box.green{background:var(--green-bg);border-color:#A7F3D0;color:#065F46}
+.note-box strong{color:var(--text)}
+
+/* ── Section break ── */
+.section-break{margin:36px 0 24px}
+
+/* ── Response field list ── */
+.resp-fields{font-size:12px}
+.resp-field{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--border-light);align-items:baseline}
+.resp-field:last-child{border-bottom:none}
+.rf-name{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);min-width:160px;flex-shrink:0}
+.rf-type{font-family:var(--mono);font-size:10.5px;color:var(--text-3);min-width:80px;flex-shrink:0}
+.rf-desc{color:var(--text-2)}
+
+/* ── Flow steps ── */
+.flow-steps{display:flex;flex-direction:column;gap:0;margin:8px 0}
+.flow-step{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border-light)}
+.flow-step:last-child{border-bottom:none}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-body{flex:1;min-width:0}
+.step-title{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:2px}
+.step-detail{font-size:12px;color:var(--text-2)}
+
+@media (max-width:900px){.layout{flex-direction:column}.sidebar{width:100%;height:auto;position:relative;overflow-x:auto;white-space:nowrap}.overview-grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-logo">HPCN<span>AgenticAI</span></div>
+  <div class="topbar-base">Base URL: /ai-service</div>
+  <div class="topbar-version">KB API · v1.0</div>
+</div>
+
+<div class="layout">
+
+<!-- ───── Sidebar ───── -->
+<nav class="sidebar">
+  <div class="sb-group">
+    <span class="sb-label">Overview</span>
+    <a class="sb-item" href="#overview"><span class="sp">Auth & Headers</span></a>
+    <a class="sb-item" href="#flow"><span class="sp">Luồng tích hợp</span></a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
+    <span class="sb-label">US_06 — Tra cứu</span>
+    <a class="sb-item" href="#ep-list-cats"><span class="mb get">GET</span><span class="sp">/kb/categories</span></a>
+    <a class="sb-item" href="#ep-list-records"><span class="mb get">GET</span><span class="sp">/kb/categories/{id}/records</span></a>
+    <a class="sb-item" href="#ep-list-cols"><span class="mb get">GET</span><span class="sp">/kb/categories/{id}/columns</span></a>
+    <a class="sb-item" href="#ep-list-library"><span class="mb get">GET</span><span class="sp">/kb/columns</span></a>
+    <a class="sb-item" href="#ep-get-colcfg"><span class="mb get">GET</span><span class="sp">/kb/users/{email}/column-config</span></a>
+    <a class="sb-item" href="#ep-put-colcfg"><span class="mb put">PUT</span><span class="sp">/kb/users/{email}/column-config</span></a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
+    <span class="sb-label">US_07_01 — Danh mục</span>
+    <a class="sb-item" href="#ep-create-cat"><span class="mb post">POST</span><span class="sp">/kb/categories</span></a>
+    <a class="sb-item" href="#ep-update-cat"><span class="mb put">PUT</span><span class="sp">/kb/categories/{id}</span></a>
+    <a class="sb-item" href="#ep-ref-cat"><span class="mb get">GET</span><span class="sp">/kb/categories/{id}/references</span></a>
+    <a class="sb-item" href="#ep-del-cat"><span class="mb del">DEL</span><span class="sp">/kb/categories/{id}</span></a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
+    <span class="sb-label">US_07_02 — Cột</span>
+    <a class="sb-item" href="#ep-create-col"><span class="mb post">POST</span><span class="sp">/kb/categories/{id}/columns</span></a>
+    <a class="sb-item" href="#ep-update-col"><span class="mb put">PUT</span><span class="sp">/kb/categories/{id}/columns/{col_id}</span></a>
+    <a class="sb-item" href="#ep-ref-col"><span class="mb get">GET</span><span class="sp">/columns/{col_id}/references</span></a>
+    <a class="sb-item" href="#ep-del-col"><span class="mb del">DEL</span><span class="sp">/columns/{col_id}</span></a>
+    <a class="sb-item" href="#ep-clone-col"><span class="mb post">POST</span><span class="sp">/columns/{col_id}/clone</span></a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
+    <span class="sb-label">US_07_03 — Bản ghi</span>
+    <a class="sb-item" href="#ep-create-rec"><span class="mb post">POST</span><span class="sp">/kb/categories/{id}/records</span></a>
+    <a class="sb-item" href="#ep-update-rec"><span class="mb put">PUT</span><span class="sp">/records/{rec_id}</span></a>
+    <a class="sb-item" href="#ep-activate"><span class="mb put">PUT</span><span class="sp">/records/activate</span></a>
+    <a class="sb-item" href="#ep-deactivate"><span class="mb put">PUT</span><span class="sp">/records/deactivate</span></a>
+    <a class="sb-item" href="#ep-delete-rec"><span class="mb del">DEL</span><span class="sp">/records (bulk delete)</span></a>
+  </div>
+</nav>
+
+<!-- ───── Main ───── -->
+<main class="main">
+
+<!-- ── Overview ── -->
+<section id="overview">
+  <div class="section-header">
+    <div class="section-eyebrow">Knowledge Base Management</div>
+    <div class="section-title">Auth & Headers</div>
+    <div class="section-subtitle">Tất cả request đều cần Traefik forward-auth headers. Trong môi trường dev/test, set thủ công.</div>
+  </div>
+
+  <div class="overview-grid">
+    <div class="ov-card">
+      <div class="ov-card-title">Required Headers (tất cả endpoints)</div>
+      <div class="header-row">
+        <span class="header-name">x-auth-email</span>
+        <span class="header-req">required</span>
+        <span class="header-desc">Email user đang đăng nhập</span>
+      </div>
+      <div class="header-row">
+        <span class="header-name">x-auth-user-id</span>
+        <span class="header-req">required</span>
+        <span class="header-desc">User ID từ Traefik</span>
+      </div>
+      <div class="header-row">
+        <span class="header-name">x-auth-work-unit</span>
+        <span class="header-opt">optional</span>
+        <span class="header-desc">Đơn vị công tác</span>
+      </div>
+      <div class="header-row">
+        <span class="header-name">x-tenant-id</span>
+        <span class="header-opt">optional</span>
+        <span class="header-desc">Mặc định: <code style="font-family:var(--mono);font-size:11px">2122030000</code></span>
+      </div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-title">Trạng thái bản ghi (business_status)</div>
+      <div class="status-flow">
+        <span class="status-pill pending">pending</span>
+        <span class="flow-arrow">→ activate →</span>
+        <span class="status-pill active">active</span>
+        <span class="flow-arrow">→ deactivate →</span>
+        <span class="status-pill pending">pending</span>
+      </div>
+      <div class="flow-note" style="margin-top:10px">
+        Khi tạo mới, record luôn ở <strong>pending</strong>. Sau khi activate, nội dung được ingest vào vector store (RabbitMQ). Deactivate <strong>không xóa</strong> vector store — record vẫn dùng cho lịch sử cũ.
+      </div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-title">Kiểu dữ liệu cột (data_type)</div>
+      <div class="dtype-grid">
+        <div class="dtype-row"><span class="dtype-tag">textbox</span> Nhập text ngắn</div>
+        <div class="dtype-row"><span class="dtype-tag">textarea</span> Nhập text dài</div>
+        <div class="dtype-row"><span class="dtype-tag">number</span> Số nguyên/thực</div>
+        <div class="dtype-row"><span class="dtype-tag">email</span> Địa chỉ email</div>
+        <div class="dtype-row"><span class="dtype-tag">dropdown</span> Chọn 1 giá trị</div>
+        <div class="dtype-row"><span class="dtype-tag">multi_select</span> Chọn nhiều</div>
+      </div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-title">Response chuẩn (ApiResponse)</div>
+      <div class="resp-fields">
+        <div class="resp-field"><span class="rf-name">success</span><span class="rf-type">boolean</span><span class="rf-desc">true / false</span></div>
+        <div class="resp-field"><span class="rf-name">data</span><span class="rf-type">array</span><span class="rf-desc">Danh sách object kết quả</span></div>
+        <div class="resp-field"><span class="rf-name">length</span><span class="rf-type">int</span><span class="rf-desc">Số phần tử trong data[]</span></div>
+        <div class="resp-field"><span class="rf-name">total_record</span><span class="rf-type">int</span><span class="rf-desc">Tổng bản ghi (pagination)</span></div>
+        <div class="resp-field"><span class="rf-name">error</span><span class="rf-type">string</span><span class="rf-desc">Thông báo lỗi khi success=false</span></div>
+        <div class="resp-field"><span class="rf-name">titles</span><span class="rf-type">object</span><span class="rf-desc">Metadata bổ sung (records endpoint)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Integration Flow ── -->
+<section id="flow">
+  <div class="section-header">
+    <div class="section-eyebrow">Integration Guide</div>
+    <div class="section-title">Luồng tích hợp — màn hình Chi tiết danh mục</div>
+    <div class="section-subtitle">Thứ tự gọi API để render bảng dữ liệu + inline row khi người dùng nhấn "+ Thêm"</div>
+  </div>
+  <div class="ep-card">
+    <div class="flow-steps" style="padding:16px 18px">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Load cấu trúc cột — <code style="font-family:var(--mono);font-size:12px">GET /kb/categories/{category_id}/columns</code></div>
+          <div class="step-detail">Lấy danh sách KBColumnDef để biết render input / select / email cho từng cột. Kết quả này cũng nằm trong <code style="font-family:var(--mono);font-size:11px">titles.columns</code> của endpoint records nên có thể gộp 1 request.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Load bản ghi — <code style="font-family:var(--mono);font-size:12px">GET /kb/categories/{category_id}/records</code></div>
+          <div class="step-detail">Response chứa đồng thời <code style="font-family:var(--mono);font-size:11px">data[]</code> (records) và <code style="font-family:var(--mono);font-size:11px">titles.columns</code> (column defs) — 1 request thay thế được bước 1.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Người dùng nhấn "+ Thêm" → render inline row rỗng</div>
+          <div class="step-detail">FE render dòng mới theo <code style="font-family:var(--mono);font-size:11px">titles.columns</code>: textbox/textarea → input, dropdown/multi_select → select, email → input[type=email].</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Người dùng nhấn ✓ Lưu — <code style="font-family:var(--mono);font-size:12px">POST /kb/categories/{category_id}/records</code></div>
+          <div class="step-detail">Gửi body <code style="font-family:var(--mono);font-size:11px">{"data": {"tên_cột": "giá trị"}}</code>. Record mới tạo luôn ở trạng thái <span class="status-pill pending" style="font-size:10px;padding:1px 7px">pending</span>.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Người dùng toggle Trạng thái → ON — <code style="font-family:var(--mono);font-size:12px">PUT /kb/categories/{category_id}/records/activate</code></div>
+          <div class="step-detail">Gửi <code style="font-family:var(--mono);font-size:11px">{"record_ids": ["&lt;record_id&gt;"]}</code>. API tự động ingest nội dung vào vector store qua RabbitMQ. Chỉ record đang <strong>pending</strong> mới được activate.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-title">Người dùng chỉnh sửa row — <code style="font-family:var(--mono);font-size:12px">PUT /kb/categories/{category_id}/records/{record_id}</code></div>
+          <div class="step-detail">Có thể sửa cả record đang active hoặc pending. Trạng thái giữ nguyên sau khi sửa.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ US_06 ═══════════════ -->
+<div class="section-break">
+  <div class="section-header">
+    <div class="section-eyebrow">US_06</div>
+    <div class="section-title">Tra cứu Knowledge Base</div>
+  </div>
+</div>
+
+<!-- GET /kb/categories -->
+<div class="ep-card" id="ep-list-cats">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/categories</code>
+    <span class="us-tag">US_06_01</span>
+  </div>
+  <div class="ep-desc">Danh sách tất cả danh mục KB của tenant kèm stats: số cột, số bản ghi active/pending. Phân trang 20/trang. Dùng để render màn hình danh sách danh mục.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'qp-list-cats')">Query Params</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-list-cats')">Response</button>
+  </div>
+  <div id="qp-list-cats" class="tab-pane active">
+    <table class="param-table">
+      <tr><th>Param</th><th>Type</th><th>Default</th><th>Mô tả</th></tr>
+      <tr><td><span class="param-name">page</span></td><td><span class="param-type">int</span></td><td class="param-default">1</td><td class="param-desc">Trang hiện tại (≥ 1)</td></tr>
+      <tr><td><span class="param-name">page_size</span></td><td><span class="param-type">int</span></td><td class="param-default">20</td><td class="param-desc">Số mục/trang (1–100)</td></tr>
+      <tr><td><span class="param-name">sort_by</span></td><td><span class="param-type">string</span></td><td class="param-default">created_at</td><td class="param-desc"><code style="font-family:var(--mono);font-size:11px">name | created_at | updated_at | category_code</code></td></tr>
+      <tr><td><span class="param-name">sort_order</span></td><td><span class="param-type">string</span></td><td class="param-default">desc</td><td class="param-desc"><code style="font-family:var(--mono);font-size:11px">asc | desc</code></td></tr>
+      <tr><td><span class="param-name">keyword</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Tìm kiếm theo name hoặc description (contains, case-insensitive)</td></tr>
+    </table>
+  </div>
+  <div id="resp-list-cats" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"category_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e1f"</span>,
+      <span class="key">"category_code"</span>: <span class="str">"DM_TRIEU_CHUNG_SU_CO"</span>,
+      <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>,
+      <span class="key">"description"</span>: <span class="str">"Danh mục triệu chứng nhận diện lỗi dịch vụ HTKT"</span>,
+      <span class="key">"so_cot"</span>: <span class="num">4</span>,
+      <span class="key">"so_active"</span>: <span class="num">12</span>,
+      <span class="key">"so_pending"</span>: <span class="num">3</span>,
+      <span class="key">"tong_ban_ghi"</span>: <span class="num">15</span>,
+      <span class="key">"updated_at"</span>: <span class="str">"2026-06-22T10:30:00+00:00"</span>,
+      <span class="key">"updated_by"</span>: <span class="str">"nhandd3@fpt.com"</span>,
+      <span class="key">"created_at"</span>: <span class="str">"2026-06-10T08:00:00+00:00"</span>
+    }
+  ],
+  <span class="key">"length"</span>: <span class="num">1</span>,
+  <span class="key">"total_record"</span>: <span class="num">8</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- GET /kb/categories/{id}/records -->
+<div class="ep-card" id="ep-list-records">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/records</code>
+    <span class="us-tag">US_06_01 / 02 / 03</span>
+  </div>
+  <div class="ep-desc">Records của một danh mục kèm column definitions. Response chứa cả <code style="font-family:var(--mono);font-size:12px">titles.columns</code> — FE dùng để biết render input hay select cho từng cột. <strong>Endpoint chính cho màn hình chi tiết danh mục.</strong></div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'qp-list-rec')">Query Params</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-list-rec')">Response</button>
+  </div>
+  <div id="qp-list-rec" class="tab-pane active">
+    <table class="param-table">
+      <tr><th>Param</th><th>Type</th><th>Default</th><th>Mô tả</th></tr>
+      <tr><td><span class="param-name">page</span></td><td><span class="param-type">int</span></td><td class="param-default">1</td><td class="param-desc">Trang hiện tại</td></tr>
+      <tr><td><span class="param-name">page_size</span></td><td><span class="param-type">int</span></td><td class="param-default">20</td><td class="param-desc">1–100</td></tr>
+      <tr><td><span class="param-name">sort_by</span></td><td><span class="param-type">string</span></td><td class="param-default">created_at</td><td class="param-desc"><code style="font-family:var(--mono);font-size:11px">record_code | business_status | created_at | updated_at | updated_by</code></td></tr>
+      <tr><td><span class="param-name">sort_order</span></td><td><span class="param-type">string</span></td><td class="param-default">desc</td><td class="param-desc"><code style="font-family:var(--mono);font-size:11px">asc | desc</code></td></tr>
+      <tr><td><span class="param-name">status</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Filter: <code style="font-family:var(--mono);font-size:11px">pending | active</code>. Không truyền = lấy tất cả</td></tr>
+      <tr><td><span class="param-name">updated_by</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Filter theo email người cập nhật cuối</td></tr>
+      <tr><td><span class="param-name">created_from</span></td><td><span class="param-type">date</span></td><td class="param-default">—</td><td class="param-desc">Format: <code style="font-family:var(--mono);font-size:11px">YYYY-MM-DD</code></td></tr>
+      <tr><td><span class="param-name">created_to</span></td><td><span class="param-type">date</span></td><td class="param-default">—</td><td class="param-desc">Format: <code style="font-family:var(--mono);font-size:11px">YYYY-MM-DD</code></td></tr>
+      <tr><td><span class="param-name">updated_from</span></td><td><span class="param-type">date</span></td><td class="param-default">—</td><td class="param-desc">Format: <code style="font-family:var(--mono);font-size:11px">YYYY-MM-DD</code></td></tr>
+      <tr><td><span class="param-name">updated_to</span></td><td><span class="param-type">date</span></td><td class="param-default">—</td><td class="param-desc">Format: <code style="font-family:var(--mono);font-size:11px">YYYY-MM-DD</code></td></tr>
+      <tr><td><span class="param-name">keyword</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Tìm kiếm trên record_code và tất cả giá trị trong data dict</td></tr>
+    </table>
+  </div>
+  <div id="resp-list-rec" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"record_id"</span>: <span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>,
+      <span class="key">"record_code"</span>: <span class="str">"DL_1"</span>,
+      <span class="key">"data"</span>: {
+        <span class="key">"triệu_chứng"</span>: <span class="str">"Mất kết nối internet"</span>,
+        <span class="key">"phân_loại"</span>: <span class="str">"Hạ tầng"</span>,
+        <span class="key">"mô_tả"</span>: <span class="str">"Khách hàng không truy cập được internet, đèn DSL tắt"</span>,
+        <span class="key">"email_phụ_trách"</span>: <span class="str">"nhandd3@fpt.com"</span>
+      },
+      <span class="key">"business_status"</span>: <span class="str">"active"</span>,
+      <span class="key">"updated_at"</span>: <span class="str">"2026-06-22T10:30:00+00:00"</span>,
+      <span class="key">"updated_by"</span>: <span class="str">"nhandd3@fpt.com"</span>,
+      <span class="key">"created_at"</span>: <span class="str">"2026-06-20T09:00:00+00:00"</span>
+    }
+  ],
+  <span class="key">"length"</span>: <span class="num">1</span>,
+  <span class="key">"total_record"</span>: <span class="num">15</span>,
+  <span class="key">"titles"</span>: {
+    <span class="key">"category"</span>: {
+      <span class="key">"category_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e1f"</span>,
+      <span class="key">"category_code"</span>: <span class="str">"DM_TRIEU_CHUNG_SU_CO"</span>,
+      <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>
+    },
+    <span class="key">"columns"</span>: [
+      {
+        <span class="key">"column_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e21"</span>,
+        <span class="key">"name"</span>: <span class="str">"triệu_chứng"</span>,
+        <span class="key">"data_type"</span>: <span class="str">"textbox"</span>,
+        <span class="key">"required"</span>: <span class="kw">true</span>,
+        <span class="key">"description"</span>: <span class="str">"Tên triệu chứng"</span>,
+        <span class="key">"order"</span>: <span class="num">0</span>
+      },
+      {
+        <span class="key">"column_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e22"</span>,
+        <span class="key">"name"</span>: <span class="str">"phân_loại"</span>,
+        <span class="key">"data_type"</span>: <span class="str">"dropdown"</span>,
+        <span class="key">"required"</span>: <span class="kw">false</span>,
+        <span class="key">"description"</span>: <span class="kw">null</span>,
+        <span class="key">"order"</span>: <span class="num">1</span>
+      },
+      {
+        <span class="key">"column_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e23"</span>,
+        <span class="key">"name"</span>: <span class="str">"mô_tả"</span>,
+        <span class="key">"data_type"</span>: <span class="str">"textarea"</span>,
+        <span class="key">"required"</span>: <span class="kw">false</span>,
+        <span class="key">"description"</span>: <span class="kw">null</span>,
+        <span class="key">"order"</span>: <span class="num">2</span>
+      },
+      {
+        <span class="key">"column_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e24"</span>,
+        <span class="key">"name"</span>: <span class="str">"email_phụ_trách"</span>,
+        <span class="key">"data_type"</span>: <span class="str">"email"</span>,
+        <span class="key">"required"</span>: <span class="kw">false</span>,
+        <span class="key">"description"</span>: <span class="kw">null</span>,
+        <span class="key">"order"</span>: <span class="num">3</span>
+      }
+    ]
+  }
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- GET /kb/categories/{id}/columns -->
+<div class="ep-card" id="ep-list-cols">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns</code>
+    <span class="us-tag">US_07_02</span>
+  </div>
+  <div class="ep-desc">Danh sách column definitions của một danh mục, sort theo <code style="font-family:var(--mono);font-size:12px">order asc</code>. Bao gồm <code style="font-family:var(--mono);font-size:12px">source_config</code> cho dropdown/multi_select.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-list-cols')">Response</button>
+  </div>
+  <div id="resp-list-cols" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"column_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e22"</span>,
+      <span class="key">"name"</span>: <span class="str">"phân_loại"</span>,
+      <span class="key">"data_type"</span>: <span class="str">"dropdown"</span>,
+      <span class="key">"required"</span>: <span class="kw">false</span>,
+      <span class="key">"description"</span>: <span class="kw">null</span>,
+      <span class="key">"order"</span>: <span class="num">1</span>,
+      <span class="key">"source_config"</span>: {
+        <span class="key">"type"</span>: <span class="str">"manual"</span>,
+        <span class="key">"values"</span>: [<span class="str">"Hạ tầng"</span>, <span class="str">"Phần mềm"</span>, <span class="str">"Thiết bị đầu cuối"</span>]
+      },
+      <span class="key">"updated_at"</span>: <span class="str">"2026-06-20T08:00:00+00:00"</span>,
+      <span class="key">"updated_by"</span>: <span class="str">"nhandd3@fpt.com"</span>
+    }
+  ],
+  <span class="key">"length"</span>: <span class="num">4</span>
+}</code></pre>
+    </div>
+    <div class="note-box" style="margin-top:10px">
+      <strong>source_config — 2 loại:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"type":"manual","values":["A","B"]}</code> — danh sách cố định<br>
+      <code style="font-family:var(--mono);font-size:11px">{"type":"data_source","category_id":"...","display_column_id":"..."}</code> — lấy từ danh mục khác
+    </div>
+  </div>
+</div>
+
+<!-- GET /kb/columns -->
+<div class="ep-card" id="ep-list-library">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/columns</code>
+    <span class="us-tag">Thư viện</span>
+  </div>
+  <div class="ep-desc">Thư viện custom field: toàn bộ KBColumnDef của tenant kèm category info. Dùng để hiển thị tab "Thư viện custom field" cho phép tái sử dụng cột qua các danh mục.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'qp-lib')">Query Params</button>
+  </div>
+  <div id="qp-lib" class="tab-pane active">
+    <table class="param-table">
+      <tr><th>Param</th><th>Type</th><th>Default</th><th>Mô tả</th></tr>
+      <tr><td><span class="param-name">page</span></td><td><span class="param-type">int</span></td><td class="param-default">1</td><td class="param-desc">—</td></tr>
+      <tr><td><span class="param-name">page_size</span></td><td><span class="param-type">int</span></td><td class="param-default">20</td><td class="param-desc">1–100</td></tr>
+      <tr><td><span class="param-name">data_type</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Filter theo kiểu dữ liệu</td></tr>
+      <tr><td><span class="param-name">keyword</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Tìm theo name hoặc description</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- GET + PUT column-config -->
+<div class="ep-card" id="ep-get-colcfg">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/users/<em>{user_email}</em>/column-config</code>
+    <span class="us-tag">US_06_01 AC_04</span>
+  </div>
+  <div class="ep-desc">Lấy cấu hình ẩn/hiện cột của user theo từng danh mục. Trả rỗng nếu chưa lưu.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'qp-get-cfg')">Query Params</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-get-cfg')">Response</button>
+  </div>
+  <div id="qp-get-cfg" class="tab-pane active">
+    <table class="param-table">
+      <tr><th>Param</th><th></th><th>Mô tả</th></tr>
+      <tr><td><span class="param-name">category_id</span></td><td><span class="param-req">required</span></td><td class="param-desc">MongoDB ObjectId của danh mục</td></tr>
+    </table>
+  </div>
+  <div id="resp-get-cfg" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"visible_columns"</span>: [<span class="str">"triệu_chứng"</span>, <span class="str">"phân_loại"</span>, <span class="str">"email_phụ_trách"</span>],
+    <span class="key">"pinned_left"</span>: [<span class="str">"triệu_chứng"</span>],
+    <span class="key">"pinned_right"</span>: []
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-put-colcfg">
+  <div class="ep-header">
+    <span class="method-badge put">PUT</span>
+    <code class="ep-path">/kb/users/<em>{user_email}</em>/column-config?category_id=<em>{id}</em></code>
+    <span class="us-tag">US_06_01 AC_04</span>
+  </div>
+  <div class="ep-desc">Lưu cấu hình ẩn/hiện, ghim cột của user. Upsert — tạo mới nếu chưa có, ghi đè nếu đã có.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-put-cfg')">Request Body</button>
+  </div>
+  <div id="body-put-cfg" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"visible_columns"</span>: [<span class="str">"triệu_chứng"</span>, <span class="str">"phân_loại"</span>, <span class="str">"email_phụ_trách"</span>],
+  <span class="key">"pinned_left"</span>: [<span class="str">"triệu_chứng"</span>],
+  <span class="key">"pinned_right"</span>: []
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ US_07_01 ═══════════════ -->
+<div class="section-break">
+  <div class="section-header">
+    <div class="section-eyebrow">US_07_01</div>
+    <div class="section-title">Quản lý Danh mục</div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-create-cat">
+  <div class="ep-header">
+    <span class="method-badge post">POST</span>
+    <code class="ep-path">/kb/categories</code>
+    <span class="us-tag">US_07_01_01</span>
+  </div>
+  <div class="ep-desc">Tạo danh mục mới. <code style="font-family:var(--mono);font-size:12px">category_code</code> tự sinh từ tên: <code style="font-family:var(--mono);font-size:12px">"Triệu chứng sự cố" → "DM_TRIEU_CHUNG_SU_CO"</code>. Tên unique per tenant.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-create-cat')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-create-cat')">Response</button>
+  </div>
+  <div id="body-create-cat" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>,
+  <span class="key">"description"</span>: <span class="str">"Danh mục triệu chứng nhận diện lỗi dịch vụ HTKT"</span>
+}</code></pre>
+    </div>
+  </div>
+  <div id="resp-create-cat" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"category_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e1f"</span>,
+    <span class="key">"category_code"</span>: <span class="str">"DM_TRIEU_CHUNG_SU_CO"</span>,
+    <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+    <div class="note-box warn" style="margin-top:10px">
+      <strong>Lỗi thường gặp:</strong> <code style="font-family:var(--mono);font-size:11px">success: false, error: "Danh mục đã tồn tại"</code> khi trùng tên trong cùng tenant.
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-update-cat">
+  <div class="ep-header">
+    <span class="method-badge put">PUT</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em></code>
+    <span class="us-tag">US_07_01_02</span>
+  </div>
+  <div class="ep-desc">Sửa tên hoặc mô tả danh mục. Chỉ truyền field cần cập nhật. <code style="font-family:var(--mono);font-size:12px">category_code</code> không thay đổi khi sửa tên.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-upd-cat')">Request Body</button>
+  </div>
+  <div id="body-upd-cat" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố HTKT"</span>,
+  <span class="key">"description"</span>: <span class="str">"Mô tả cập nhật"</span>
+}
+<span class="cmt">// Có thể chỉ truyền 1 trong 2 field</span></code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-ref-cat">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/references</code>
+    <span class="us-tag">US_07_01_03 BR_0001</span>
+  </div>
+  <div class="ep-desc">Kiểm tra danh mục có đang được dùng làm <code style="font-family:var(--mono);font-size:12px">data_source</code> bởi cột nào không. Gọi trước khi DELETE. Nếu <code style="font-family:var(--mono);font-size:12px">is_referenced: true</code> thì không thể xóa.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-ref-cat')">Response</button>
+  </div>
+  <div id="resp-ref-cat" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [],
+  <span class="key">"length"</span>: <span class="num">0</span>,
+  <span class="key">"is_referenced"</span>: <span class="kw">false</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-del-cat">
+  <div class="ep-header">
+    <span class="method-badge del">DELETE</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em></code>
+    <span class="us-tag">US_07_01_03</span>
+  </div>
+  <div class="ep-desc">Xóa danh mục. <strong>Cascade:</strong> xóa toàn bộ columns và records. Chỉ thực hiện được khi <code style="font-family:var(--mono);font-size:12px">is_referenced: false</code>.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-del-cat')">Response</button>
+  </div>
+  <div id="resp-del-cat" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{ <span class="key">"category_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e1f"</span>, <span class="key">"deleted"</span>: <span class="kw">true</span> }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ US_07_02 ═══════════════ -->
+<div class="section-break">
+  <div class="section-header">
+    <div class="section-eyebrow">US_07_02</div>
+    <div class="section-title">Quản lý Cột</div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-create-col">
+  <div class="ep-header">
+    <span class="method-badge post">POST</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns</code>
+    <span class="us-tag">US_07_02_01</span>
+  </div>
+  <div class="ep-desc">Thêm cột vào danh mục. Tên cột unique trong cùng danh mục. Khi <code style="font-family:var(--mono);font-size:12px">data_type</code> là <code style="font-family:var(--mono);font-size:12px">dropdown</code> hoặc <code style="font-family:var(--mono);font-size:12px">multi_select</code> thì bắt buộc có <code style="font-family:var(--mono);font-size:12px">source_config</code>.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-cr-col')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'body-cr-col-ds')">Dropdown từ danh mục khác</button>
+  </div>
+  <div id="body-cr-col" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON — Textbox</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"name"</span>: <span class="str">"triệu_chứng"</span>,
+  <span class="key">"data_type"</span>: <span class="str">"textbox"</span>,
+  <span class="key">"required"</span>: <span class="kw">true</span>,
+  <span class="key">"description"</span>: <span class="str">"Tên triệu chứng sự cố"</span>,
+  <span class="key">"order"</span>: <span class="num">0</span>
+}
+
+<span class="cmt">// Dropdown với danh sách cố định:</span>
+{
+  <span class="key">"name"</span>: <span class="str">"phân_loại"</span>,
+  <span class="key">"data_type"</span>: <span class="str">"dropdown"</span>,
+  <span class="key">"required"</span>: <span class="kw">false</span>,
+  <span class="key">"order"</span>: <span class="num">1</span>,
+  <span class="key">"source_config"</span>: {
+    <span class="key">"type"</span>: <span class="str">"manual"</span>,
+    <span class="key">"values"</span>: [<span class="str">"Hạ tầng"</span>, <span class="str">"Phần mềm"</span>, <span class="str">"Thiết bị đầu cuối"</span>]
+  }
+}</code></pre>
+    </div>
+  </div>
+  <div id="body-cr-col-ds" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON — Dropdown từ danh mục khác</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"name"</span>: <span class="str">"loại_dịch_vụ"</span>,
+  <span class="key">"data_type"</span>: <span class="str">"dropdown"</span>,
+  <span class="key">"required"</span>: <span class="kw">false</span>,
+  <span class="key">"order"</span>: <span class="num">2</span>,
+  <span class="key">"source_config"</span>: {
+    <span class="key">"type"</span>: <span class="str">"data_source"</span>,
+    <span class="key">"category_id"</span>: <span class="str">"684b000000000000000000aa"</span>,
+    <span class="key">"display_column_id"</span>: <span class="str">"684b000000000000000000bb"</span>
+  }
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-update-col">
+  <div class="ep-header">
+    <span class="method-badge put">PUT</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns/<em>{column_id}</em></code>
+    <span class="us-tag">US_07_02_02</span>
+  </div>
+  <div class="ep-desc">Sửa thông tin cột. Chỉ truyền field cần cập nhật (partial update).</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-upd-col')">Request Body</button>
+  </div>
+  <div id="body-upd-col" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"name"</span>: <span class="str">"triệu_chứng_mô_tả"</span>,
+  <span class="key">"required"</span>: <span class="kw">true</span>,
+  <span class="key">"order"</span>: <span class="num">0</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-ref-col">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns/<em>{column_id}</em>/references</code>
+    <span class="us-tag">US_07_02_03 BR_0002</span>
+  </div>
+  <div class="ep-desc">Kiểm tra cột có đang được dùng làm <code style="font-family:var(--mono);font-size:12px">display_column_id</code> trong source_config của cột khác không. Gọi trước khi DELETE cột.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-ref-col')">Response</button>
+  </div>
+  <div id="resp-ref-col" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [],
+  <span class="key">"length"</span>: <span class="num">0</span>,
+  <span class="key">"is_referenced"</span>: <span class="kw">false</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-del-col">
+  <div class="ep-header">
+    <span class="method-badge del">DELETE</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns/<em>{column_id}</em></code>
+    <span class="us-tag">US_07_02_03</span>
+  </div>
+  <div class="ep-desc">Xóa cột. Chỉ xóa được khi <code style="font-family:var(--mono);font-size:12px">is_referenced: false</code>. Lưu ý: data trong records cũ vẫn giữ nguyên field này trong MongoDB (schema-less).</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-del-col')">Response</button>
+  </div>
+  <div id="resp-del-col" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{ <span class="key">"column_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e22"</span>, <span class="key">"deleted"</span>: <span class="kw">true</span> }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="ep-card" id="ep-clone-col">
+  <div class="ep-header">
+    <span class="method-badge post">POST</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns/<em>{column_id}</em>/clone</code>
+    <span class="us-tag">US_07_02_04</span>
+  </div>
+  <div class="ep-desc">Nhân bản cột — copy toàn bộ config (data_type, required, source_config, order). Tên mới tự động thêm hậu tố <code style="font-family:var(--mono);font-size:12px">_copy</code>. Không cần request body.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-clone')">Response</button>
+  </div>
+  <div id="resp-clone" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{ <span class="key">"column_id"</span>: <span class="str">"684b2c3d4e5f6a7b8c9d0e99"</span>, <span class="key">"name"</span>: <span class="str">"phân_loại_copy"</span> }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ US_07_03 ═══════════════ -->
+<div class="section-break">
+  <div class="section-header">
+    <div class="section-eyebrow">US_07_03 — Đây là nhóm API chính cho màn hình trong ảnh</div>
+    <div class="section-title">Quản lý Bản ghi</div>
+    <div class="section-subtitle">Key field: <code style="font-family:var(--mono);font-size:13px">data</code> là dict dynamic — key là tên cột (KBColumnDef.name), value là giá trị người dùng nhập.</div>
+  </div>
+</div>
+
+<!-- POST records -->
+<div class="ep-card" id="ep-create-rec">
+  <div class="ep-header">
+    <span class="method-badge post">POST</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/records</code>
+    <span class="us-tag">US_07_03_01</span>
+  </div>
+  <div class="ep-desc">Thêm bản ghi mới. Validate các cột <code style="font-family:var(--mono);font-size:12px">required: true</code>. <code style="font-family:var(--mono);font-size:12px">record_code</code> tự sinh <code style="font-family:var(--mono);font-size:12px">DL_N</code>. Record tạo luôn ở trạng thái <span class="status-pill pending" style="font-size:10px;padding:1px 7px;display:inline-block">pending</span>.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-cr-rec')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-cr-rec')">Response</button>
+    <button class="tab-btn" onclick="switchTab(this,'err-cr-rec')">Lỗi</button>
+  </div>
+  <div id="body-cr-rec" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"data"</span>: {
+    <span class="key">"triệu_chứng"</span>: <span class="str">"Mất kết nối internet"</span>,
+    <span class="key">"phân_loại"</span>: <span class="str">"Hạ tầng"</span>,
+    <span class="key">"mô_tả"</span>: <span class="str">"Khách hàng không truy cập được internet, đèn DSL tắt"</span>,
+    <span class="key">"email_phụ_trách"</span>: <span class="str">"nhandd3@fpt.com"</span>
+  }
+}
+<span class="cmt">// Key = KBColumnDef.name — phải khớp chính xác (case-sensitive)</span></code></pre>
+    </div>
+  </div>
+  <div id="resp-cr-rec" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"record_id"</span>: <span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>,
+    <span class="key">"record_code"</span>: <span class="str">"DL_16"</span>,
+    <span class="key">"business_status"</span>: <span class="str">"pending"</span>
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+  <div id="err-cr-rec" class="tab-pane">
+    <div class="note-box warn">
+      <strong>Thiếu trường bắt buộc:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Trường bắt buộc nhập: triệu_chứng"}</code>
+    </div>
+  </div>
+</div>
+
+<!-- PUT records/{id} -->
+<div class="ep-card" id="ep-update-rec">
+  <div class="ep-header">
+    <span class="method-badge put">PUT</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/records/<em>{record_id}</em></code>
+    <span class="us-tag">US_07_03_02</span>
+  </div>
+  <div class="ep-desc">Sửa nội dung bản ghi. Ghi đè toàn bộ <code style="font-family:var(--mono);font-size:12px">data</code> — truyền đầy đủ tất cả field, không chỉ field thay đổi. Trạng thái giữ nguyên.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-upd-rec')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-upd-rec')">Response</button>
+  </div>
+  <div id="body-upd-rec" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"data"</span>: {
+    <span class="key">"triệu_chứng"</span>: <span class="str">"Mất kết nối internet (đã cập nhật)"</span>,
+    <span class="key">"phân_loại"</span>: <span class="str">"Hạ tầng"</span>,
+    <span class="key">"mô_tả"</span>: <span class="str">"Cập nhật mô tả chi tiết"</span>,
+    <span class="key">"email_phụ_trách"</span>: <span class="str">"nhandd3@fpt.com"</span>
+  }
+}
+<span class="cmt">// Ghi đè toàn bộ data — gửi tất cả field dù không đổi</span></code></pre>
+    </div>
+  </div>
+  <div id="resp-upd-rec" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"record_id"</span>: <span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>,
+    <span class="key">"record_code"</span>: <span class="str">"DL_16"</span>
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- PUT activate -->
+<div class="ep-card" id="ep-activate">
+  <div class="ep-header">
+    <span class="method-badge put">PUT</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/records/activate</code>
+    <span class="us-tag">US_07_03_03</span>
+  </div>
+  <div class="ep-desc">Bulk activate: chuyển từ <span class="status-pill pending" style="font-size:10px;padding:1px 7px;display:inline-block">pending</span> → <span class="status-pill active" style="font-size:10px;padding:1px 7px;display:inline-block">active</span> và trigger ingest vào vector store qua RabbitMQ. Chỉ record đang pending mới được xử lý — các record khác trong list bị bỏ qua.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-act')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-act')">Response</button>
+    <button class="tab-btn" onclick="switchTab(this,'err-act')">Lỗi</button>
+  </div>
+  <div id="body-act" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"record_ids"</span>: [
+    <span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>,
+    <span class="str">"684c3d4e5f6a7b8c9d0e1f21"</span>
+  ]
+}
+<span class="cmt">// Tối thiểu 1 phần tử. Toggle đơn lẻ: truyền mảng 1 phần tử.</span></code></pre>
+    </div>
+  </div>
+  <div id="resp-act" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"activated"</span>: <span class="num">2</span>,
+    <span class="key">"record_ids"</span>: [
+      <span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>,
+      <span class="str">"684c3d4e5f6a7b8c9d0e1f21"</span>
+    ]
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+  <div id="err-act" class="tab-pane">
+    <div class="note-box warn" style="margin-bottom:8px">
+      <strong>Tất cả record đều đang active:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Không có bản ghi nào ở trạng thái Đang chờ duyệt"}</code>
+    </div>
+    <div class="note-box green">
+      <strong>Lưu ý vector store:</strong> Sau activate, backend tự động publish message lên RabbitMQ để ingest nội dung vào vector store. FE không cần gọi thêm endpoint nào.
+    </div>
+  </div>
+</div>
+
+<!-- DELETE records (bulk) -->
+<div class="ep-card" id="ep-delete-rec">
+  <div class="ep-header">
+    <span class="method-badge del">DELETE</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/records</code>
+    <span class="us-tag">US_07_03_05</span>
+  </div>
+  <div class="ep-desc">Bulk delete bản ghi — xóa vĩnh viễn khỏi MongoDB, lưu audit log. Hỗ trợ xóa đơn lẻ (mảng 1 phần tử) hoặc nhiều cùng lúc. Xóa được cả record đang <span class="status-pill pending" style="font-size:10px;padding:1px 7px;display:inline-block">pending</span> lẫn <span class="status-pill active" style="font-size:10px;padding:1px 7px;display:inline-block">active</span>.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-del-rec')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-del-rec')">Response</button>
+    <button class="tab-btn" onclick="switchTab(this,'err-del-rec')">Lỗi</button>
+  </div>
+  <div id="body-del-rec" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON — xóa 1 bản ghi</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"record_ids"</span>: [<span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>]
+}</code></pre>
+    </div>
+    <div class="code-wrap" style="margin-top:8px">
+      <span class="code-lang">JSON — xóa nhiều bản ghi</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"record_ids"</span>: [
+    <span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>,
+    <span class="str">"684c3d4e5f6a7b8c9d0e1f21"</span>,
+    <span class="str">"684c3d4e5f6a7b8c9d0e1f22"</span>
+  ]
+}</code></pre>
+    </div>
+  </div>
+  <div id="resp-del-rec" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"deleted"</span>: <span class="num">3</span>,
+    <span class="key">"record_ids"</span>: [
+      <span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>,
+      <span class="str">"684c3d4e5f6a7b8c9d0e1f21"</span>,
+      <span class="str">"684c3d4e5f6a7b8c9d0e1f22"</span>
+    ]
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+  <div id="err-del-rec" class="tab-pane">
+    <div class="note-box warn" style="margin-bottom:8px">
+      <strong>Không truyền record_ids:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Cần chọn ít nhất 1 bản ghi"}</code>
+    </div>
+    <div class="note-box warn" style="margin-bottom:8px">
+      <strong>record_id không hợp lệ (không phải MongoDB ObjectId):</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Có record_id không hợp lệ"}</code>
+    </div>
+    <div class="note-box warn">
+      <strong>Không tìm thấy bản ghi nào trong category:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Không tìm thấy bản ghi nào"}</code>
+    </div>
+    <div class="note-box" style="margin-top:8px">
+      <strong>Lưu ý vector store:</strong> Endpoint này chỉ xóa record khỏi MongoDB. Nếu record đang <strong>active</strong>, dữ liệu vẫn còn trong vector store và AI vẫn có thể dùng để trả lời. Cân nhắc deactivate trước khi xóa nếu cần dọn sạch hoàn toàn.
+    </div>
+  </div>
+</div>
+
+<!-- PUT deactivate -->
+<div class="ep-card" id="ep-deactivate">
+  <div class="ep-header">
+    <span class="method-badge put">PUT</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/records/deactivate</code>
+    <span class="us-tag">US_07_03_04</span>
+  </div>
+  <div class="ep-desc">Bulk deactivate: chuyển từ <span class="status-pill active" style="font-size:10px;padding:1px 7px;display:inline-block">active</span> → <span class="status-pill pending" style="font-size:10px;padding:1px 7px;display:inline-block">pending</span>. <strong>Không xóa vector store</strong> — dữ liệu cũ vẫn phục vụ lịch sử. Chỉ record đang active mới được xử lý.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-deact')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-deact')">Response</button>
+  </div>
+  <div id="body-deact" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"record_ids"</span>: [<span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>]
+}</code></pre>
+    </div>
+  </div>
+  <div id="resp-deact" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"deactivated"</span>: <span class="num">1</span>,
+    <span class="key">"record_ids"</span>: [<span class="str">"684c3d4e5f6a7b8c9d0e1f20"</span>]
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+function switchTab(btn, targetId) {
+  const card = btn.closest('.ep-card, section');
+  const tabs = btn.closest('.tabs');
+  tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const panes = card.querySelectorAll('.tab-pane');
+  panes.forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(targetId);
+  if (target) target.classList.add('active');
+}
+
+function copyCode(btn) {
+  const pre = btn.nextElementSibling;
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Đã copy';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// Active nav tracking
+const items = document.querySelectorAll('.sb-item[href]');
+const sections = [];
+items.forEach(a => {
+  const id = a.getAttribute('href').slice(1);
+  const el = document.getElementById(id);
+  if (el) sections.push({ el, a });
+});
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      sections.forEach(s => s.a.classList.remove('active'));
+      const found = sections.find(s => s.el === e.target);
+      if (found) found.a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-60px 0px -80% 0px' });
+
+sections.forEach(s => obs.observe(s.el));
+</script>
