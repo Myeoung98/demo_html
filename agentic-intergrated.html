@@ -171,11 +171,19 @@ pre.code-pre{background:var(--code-bg);color:var(--code-text);font-family:var(--
   </div>
   <div class="sb-divider"></div>
   <div class="sb-group">
+    <span class="sb-label">Thư viện Field</span>
+    <a class="sb-item" href="#ep-create-lib"><span class="mb post">POST</span><span class="sp">/kb/library-fields</span></a>
+    <a class="sb-item" href="#ep-update-lib"><span class="mb put">PUT</span><span class="sp">/kb/library-fields/{id}</span></a>
+    <a class="sb-item" href="#ep-delete-lib"><span class="mb del">DEL</span><span class="sp">/kb/library-fields/{id}</span></a>
+    <a class="sb-item" href="#ep-from-lib"><span class="mb post">POST</span><span class="sp">/columns/from-library/{field_id}</span></a>
+    <a class="sb-item" href="#ep-list-library"><span class="mb get">GET</span><span class="sp">/kb/columns</span></a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
     <span class="sb-label">US_06 — Tra cứu</span>
     <a class="sb-item" href="#ep-list-cats"><span class="mb get">GET</span><span class="sp">/kb/categories</span></a>
     <a class="sb-item" href="#ep-list-records"><span class="mb get">GET</span><span class="sp">/kb/categories/{id}/records</span></a>
     <a class="sb-item" href="#ep-list-cols"><span class="mb get">GET</span><span class="sp">/kb/categories/{id}/columns</span></a>
-    <a class="sb-item" href="#ep-list-library"><span class="mb get">GET</span><span class="sp">/kb/columns</span></a>
     <a class="sb-item" href="#ep-get-colcfg"><span class="mb get">GET</span><span class="sp">/kb/users/{email}/column-config</span></a>
     <a class="sb-item" href="#ep-put-colcfg"><span class="mb put">PUT</span><span class="sp">/kb/users/{email}/column-config</span></a>
   </div>
@@ -337,6 +345,235 @@ pre.code-pre{background:var(--code-bg);color:var(--code-text);font-family:var(--
     </div>
   </div>
 </section>
+
+<!-- ═══════════════ Thư viện Field ═══════════════ -->
+<div class="section-break">
+  <div class="section-header">
+    <div class="section-eyebrow">Option A — Library Field</div>
+    <div class="section-title">Thư viện Custom Field</div>
+    <div class="section-subtitle">Field không thuộc danh mục nào. Danh mục adopt field từ thư viện. <code style="font-family:var(--mono);font-size:13px">usage_count</code> = số danh mục đã adopt field này.</div>
+  </div>
+</div>
+
+<div class="ep-card" style="margin-bottom:16px;border-left:3px solid var(--accent)">
+  <div style="padding:12px 18px 4px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)">UI Flow — Modal "Thêm cột từ thư viện custom field"</div>
+  <div style="padding:4px 18px 14px">
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Mở modal → load danh sách — <code style="font-family:var(--mono);font-size:12px">GET /kb/columns</code></div>
+          <div class="step-detail">Hiển thị danh sách library fields. Nếu rỗng → hiện trạng thái "Chưa có field nào".</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">User bấm "+ Thêm field mới" — <code style="font-family:var(--mono);font-size:12px">POST /kb/library-fields</code></div>
+          <div class="step-detail">Tạo field trong thư viện. Không gắn với danh mục. <code style="font-family:var(--mono);font-size:11px">field_code</code> tự sinh <code style="font-family:var(--mono);font-size:11px">FL_XXX</code>. Sau đó reload lại <code style="font-family:var(--mono);font-size:11px">GET /kb/columns</code>.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">User tick chọn field(s) → bấm "Thêm cột" — <code style="font-family:var(--mono);font-size:12px">POST /kb/categories/{id}/columns/from-library/{field_id}</code></div>
+          <div class="step-detail">Gọi lần lượt cho mỗi field được chọn. Field vẫn tồn tại trong thư viện, <code style="font-family:var(--mono);font-size:11px">usage_count</code> tăng lên 1 mỗi lần adopt.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Xóa field khỏi danh mục — <code style="font-family:var(--mono);font-size:12px">DELETE /kb/categories/{id}/columns/{col_id}</code></div>
+          <div class="step-detail">Xóa cột trong danh mục, field trong thư viện vẫn còn. <code style="font-family:var(--mono);font-size:11px">usage_count</code> tự giảm. Nếu <code style="font-family:var(--mono);font-size:11px">usage_count = 0</code> → nút xóa field trong thư viện được enable.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POST /kb/library-fields -->
+<div class="ep-card" id="ep-create-lib">
+  <div class="ep-header">
+    <span class="method-badge post">POST</span>
+    <code class="ep-path">/kb/library-fields</code>
+    <span class="us-tag">Thư viện</span>
+  </div>
+  <div class="ep-desc">Tạo field mới trong thư viện — không gắn với danh mục. <code style="font-family:var(--mono);font-size:12px">field_code</code> tự sinh <code style="font-family:var(--mono);font-size:12px">FL_XXX</code>. Tên field unique per tenant.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-cr-lib')">Request Body</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-cr-lib')">Response</button>
+  </div>
+  <div id="body-cr-lib" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>,
+  <span class="key">"data_type"</span>: <span class="str">"textbox"</span>,
+  <span class="key">"required"</span>: <span class="kw">true</span>,
+  <span class="key">"description"</span>: <span class="str">"Mô tả ngắn gọn triệu chứng"</span>,
+  <span class="key">"source_config"</span>: <span class="kw">null</span>
+}
+<span class="cmt">// source_config chỉ cần khi data_type = dropdown / multi_select</span></code></pre>
+    </div>
+  </div>
+  <div id="resp-cr-lib" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"field_id"</span>: <span class="str">"684d1a2b3c4d5e6f7a8b9c0d"</span>,
+    <span class="key">"field_code"</span>: <span class="str">"FL_TRIEU_CHUNG_SU_CO"</span>,
+    <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- PUT /kb/library-fields/{id} -->
+<div class="ep-card" id="ep-update-lib">
+  <div class="ep-header">
+    <span class="method-badge put">PUT</span>
+    <code class="ep-path">/kb/library-fields/<em>{field_id}</em></code>
+    <span class="us-tag">Thư viện</span>
+  </div>
+  <div class="ep-desc">Sửa library field. Không cho đổi <code style="font-family:var(--mono);font-size:12px">data_type</code> để tránh conflict với các danh mục đã adopt.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'body-upd-lib')">Request Body</button>
+  </div>
+  <div id="body-upd-lib" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố (cập nhật)"</span>,
+  <span class="key">"required"</span>: <span class="kw">false</span>,
+  <span class="key">"description"</span>: <span class="str">"Mô tả mới"</span>
+}
+<span class="cmt">// Partial update — chỉ truyền field muốn đổi</span></code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE /kb/library-fields/{id} -->
+<div class="ep-card" id="ep-delete-lib">
+  <div class="ep-header">
+    <span class="method-badge del">DELETE</span>
+    <code class="ep-path">/kb/library-fields/<em>{field_id}</em></code>
+    <span class="us-tag">Thư viện</span>
+  </div>
+  <div class="ep-desc">Xóa library field. <strong>Bị chặn</strong> nếu còn danh mục đang dùng field này — cần remove khỏi tất cả danh mục trước.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-del-lib')">Response</button>
+    <button class="tab-btn" onclick="switchTab(this,'err-del-lib')">Lỗi</button>
+  </div>
+  <div id="resp-del-lib" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{ <span class="key">"field_id"</span>: <span class="str">"684d1a2b3c4d5e6f7a8b9c0d"</span>, <span class="key">"deleted"</span>: <span class="kw">true</span> }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+  <div id="err-del-lib" class="tab-pane">
+    <div class="note-box warn">
+      <strong>Còn danh mục đang dùng:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Không thể xóa — field đang được dùng trong 3 danh mục"}</code>
+    </div>
+  </div>
+</div>
+
+<!-- POST from-library -->
+<div class="ep-card" id="ep-from-lib">
+  <div class="ep-header">
+    <span class="method-badge post">POST</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns/from-library/<em>{field_id}</em></code>
+    <span class="us-tag">Adopt Field</span>
+  </div>
+  <div class="ep-desc">Thêm library field vào danh mục. Tạo bản sao KBColumnDef trong danh mục với <code style="font-family:var(--mono);font-size:12px">library_field_id</code> trỏ về field gốc. Không cần request body. <code style="font-family:var(--mono);font-size:12px">usage_count</code> của field tăng lên 1.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-from-lib')">Response</button>
+    <button class="tab-btn" onclick="switchTab(this,'err-from-lib')">Lỗi</button>
+  </div>
+  <div id="resp-from-lib" class="tab-pane active">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"column_id"</span>: <span class="str">"684e2b3c4d5e6f7a8b9c0d1e"</span>,
+    <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>,
+    <span class="key">"library_field_id"</span>: <span class="str">"684d1a2b3c4d5e6f7a8b9c0d"</span>
+  }],
+  <span class="key">"length"</span>: <span class="num">1</span>
+}</code></pre>
+    </div>
+  </div>
+  <div id="err-from-lib" class="tab-pane">
+    <div class="note-box warn">
+      <strong>Field đã được thêm vào danh mục này rồi:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Field này đã được thêm vào danh mục rồi"}</code>
+    </div>
+  </div>
+</div>
+
+<!-- GET /kb/columns (library view) -->
+<div class="ep-card" id="ep-list-library">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/columns</code>
+    <span class="us-tag">Thư viện</span>
+  </div>
+  <div class="ep-desc">Danh sách library fields. Chỉ trả về fields có <code style="font-family:var(--mono);font-size:12px">category_id = null</code>. <code style="font-family:var(--mono);font-size:12px">usage_count</code> = số danh mục đã adopt field này.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'qp-lib2')">Query Params</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-lib2')">Response</button>
+  </div>
+  <div id="qp-lib2" class="tab-pane active">
+    <table class="param-table">
+      <tr><th>Param</th><th>Type</th><th>Default</th><th>Mô tả</th></tr>
+      <tr><td><span class="param-name">page</span></td><td><span class="param-type">int</span></td><td class="param-default">1</td><td class="param-desc">—</td></tr>
+      <tr><td><span class="param-name">page_size</span></td><td><span class="param-type">int</span></td><td class="param-default">20</td><td class="param-desc">1–100</td></tr>
+      <tr><td><span class="param-name">data_type</span></td><td><span class="param-type">string[]</span></td><td class="param-default">—</td><td class="param-desc">Filter nhiều kiểu: <code style="font-family:var(--mono);font-size:11px">?data_type=textbox&data_type=dropdown</code></td></tr>
+      <tr><td><span class="param-name">keyword</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Tìm theo name hoặc description</td></tr>
+    </table>
+  </div>
+  <div id="resp-lib2" class="tab-pane">
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"field_id"</span>: <span class="str">"684d1a2b3c4d5e6f7a8b9c0d"</span>,
+      <span class="key">"field_code"</span>: <span class="str">"FL_TRIEU_CHUNG_SU_CO"</span>,
+      <span class="key">"name"</span>: <span class="str">"Triệu chứng sự cố"</span>,
+      <span class="key">"description"</span>: <span class="str">"Mô tả ngắn gọn triệu chứng"</span>,
+      <span class="key">"data_type"</span>: <span class="str">"textbox"</span>,
+      <span class="key">"required"</span>: <span class="kw">true</span>,
+      <span class="key">"source_config"</span>: <span class="kw">null</span>,
+      <span class="key">"updated_at"</span>: <span class="str">"2026-06-24T09:00:00+00:00"</span>,
+      <span class="key">"updated_by"</span>: <span class="str">"nhandd3@fpt.com"</span>,
+      <span class="key">"usage_count"</span>: <span class="num">4</span>
+    }
+  ],
+  <span class="key">"length"</span>: <span class="num">1</span>,
+  <span class="key">"total_record"</span>: <span class="num">24</span>
+}
+<span class="cmt">// usage_count = 0  →  FE hiển thị "Chưa dùng"
+// usage_count > 0  →  FE hiển thị "X danh mục" (màu xanh)</span></code></pre>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════ US_06 ═══════════════ -->
 <div class="section-break">
@@ -535,28 +772,6 @@ pre.code-pre{background:var(--code-bg);color:var(--code-text);font-family:var(--
       <code style="font-family:var(--mono);font-size:11px">{"type":"manual","values":["A","B"]}</code> — danh sách cố định<br>
       <code style="font-family:var(--mono);font-size:11px">{"type":"data_source","category_id":"...","display_column_id":"..."}</code> — lấy từ danh mục khác
     </div>
-  </div>
-</div>
-
-<!-- GET /kb/columns -->
-<div class="ep-card" id="ep-list-library">
-  <div class="ep-header">
-    <span class="method-badge get">GET</span>
-    <code class="ep-path">/kb/columns</code>
-    <span class="us-tag">Thư viện</span>
-  </div>
-  <div class="ep-desc">Thư viện custom field: toàn bộ KBColumnDef của tenant kèm category info. Dùng để hiển thị tab "Thư viện custom field" cho phép tái sử dụng cột qua các danh mục.</div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'qp-lib')">Query Params</button>
-  </div>
-  <div id="qp-lib" class="tab-pane active">
-    <table class="param-table">
-      <tr><th>Param</th><th>Type</th><th>Default</th><th>Mô tả</th></tr>
-      <tr><td><span class="param-name">page</span></td><td><span class="param-type">int</span></td><td class="param-default">1</td><td class="param-desc">—</td></tr>
-      <tr><td><span class="param-name">page_size</span></td><td><span class="param-type">int</span></td><td class="param-default">20</td><td class="param-desc">1–100</td></tr>
-      <tr><td><span class="param-name">data_type</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Filter theo kiểu dữ liệu</td></tr>
-      <tr><td><span class="param-name">keyword</span></td><td><span class="param-type">string</span></td><td class="param-default">—</td><td class="param-desc">Tìm theo name hoặc description</td></tr>
-    </table>
   </div>
 </div>
 
@@ -853,7 +1068,7 @@ pre.code-pre{background:var(--code-bg);color:var(--code-text);font-family:var(--
     <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns/<em>{column_id}</em></code>
     <span class="us-tag">US_07_02_03</span>
   </div>
-  <div class="ep-desc">Xóa cột. Chỉ xóa được khi <code style="font-family:var(--mono);font-size:12px">is_referenced: false</code>. Lưu ý: data trong records cũ vẫn giữ nguyên field này trong MongoDB (schema-less).</div>
+  <div class="ep-desc">Xóa cột khỏi danh mục. Chỉ xóa được khi <code style="font-family:var(--mono);font-size:12px">is_referenced: false</code>. Nếu cột là <strong>adopted column</strong> (có <code style="font-family:var(--mono);font-size:12px">library_field_id</code>), field trong thư viện vẫn giữ nguyên và <code style="font-family:var(--mono);font-size:12px">usage_count</code> tự giảm 1. Data trong records cũ vẫn giữ nguyên field này trong MongoDB (schema-less).</div>
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab(this,'resp-del-col')">Response</button>
   </div>
