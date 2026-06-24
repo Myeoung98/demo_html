@@ -184,6 +184,7 @@ pre.code-pre{background:var(--code-bg);color:var(--code-text);font-family:var(--
     <a class="sb-item" href="#ep-list-cats"><span class="mb get">GET</span><span class="sp">/kb/categories</span></a>
     <a class="sb-item" href="#ep-list-records"><span class="mb get">GET</span><span class="sp">/kb/categories/{id}/records</span></a>
     <a class="sb-item" href="#ep-list-cols"><span class="mb get">GET</span><span class="sp">/kb/categories/{id}/columns</span></a>
+    <a class="sb-item" href="#ep-dropdown-opts"><span class="mb get">GET</span><span class="sp">/columns/{col_id}/dropdown-options</span></a>
     <a class="sb-item" href="#ep-get-colcfg"><span class="mb get">GET</span><span class="sp">/kb/users/{email}/column-config</span></a>
     <a class="sb-item" href="#ep-put-colcfg"><span class="mb put">PUT</span><span class="sp">/kb/users/{email}/column-config</span></a>
   </div>
@@ -771,6 +772,67 @@ pre.code-pre{background:var(--code-bg);color:var(--code-text);font-family:var(--
       <strong>source_config — 2 loại:</strong><br>
       <code style="font-family:var(--mono);font-size:11px">{"type":"manual","values":["A","B"]}</code> — danh sách cố định<br>
       <code style="font-family:var(--mono);font-size:11px">{"type":"data_source","category_id":"...","display_column_id":"..."}</code> — lấy từ danh mục khác
+    </div>
+  </div>
+</div>
+
+<!-- GET dropdown-options -->
+<div class="ep-card" id="ep-dropdown-opts">
+  <div class="ep-header">
+    <span class="method-badge get">GET</span>
+    <code class="ep-path">/kb/categories/<em>{category_id}</em>/columns/<em>{column_id}</em>/dropdown-options</code>
+    <span class="us-tag">Dropdown</span>
+  </div>
+  <div class="ep-desc">Lấy danh sách options cho cột <code style="font-family:var(--mono);font-size:12px">dropdown</code> / <code style="font-family:var(--mono);font-size:12px">multi_select</code>. Không cần request body. Chỉ dùng được với cột có <code style="font-family:var(--mono);font-size:12px">data_type = dropdown | multi_select</code>.</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'resp-dd-manual')">Manual list</button>
+    <button class="tab-btn" onclick="switchTab(this,'resp-dd-ds')">Data source</button>
+    <button class="tab-btn" onclick="switchTab(this,'err-dd')">Lỗi</button>
+  </div>
+  <div id="resp-dd-manual" class="tab-pane active">
+    <div class="note-box" style="margin-bottom:10px">
+      <strong>source_config.type = "manual"</strong> — trả về <code style="font-family:var(--mono);font-size:11px">values</code> từ config, <strong>không query DB</strong>.
+    </div>
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [
+    { <span class="key">"label"</span>: <span class="str">"Hạ tầng"</span>,             <span class="key">"value"</span>: <span class="str">"Hạ tầng"</span> },
+    { <span class="key">"label"</span>: <span class="str">"Phần mềm"</span>,            <span class="key">"value"</span>: <span class="str">"Phần mềm"</span> },
+    { <span class="key">"label"</span>: <span class="str">"Thiết bị đầu cuối"</span>, <span class="key">"value"</span>: <span class="str">"Thiết bị đầu cuối"</span> }
+  ],
+  <span class="key">"length"</span>: <span class="num">3</span>
+}</code></pre>
+    </div>
+  </div>
+  <div id="resp-dd-ds" class="tab-pane">
+    <div class="note-box" style="margin-bottom:10px">
+      <strong>source_config.type = "data_source"</strong> — query active records từ category được reference, lấy distinct values của <code style="font-family:var(--mono);font-size:11px">display_column_id</code>.
+    </div>
+    <div class="code-wrap">
+      <span class="code-lang">JSON</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre class="code-pre"><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: [
+    { <span class="key">"label"</span>: <span class="str">"Xử lý lỗi, xử lý SC của KHG"</span>, <span class="key">"value"</span>: <span class="str">"Xử lý lỗi, xử lý SC của KHG"</span> },
+    { <span class="key">"label"</span>: <span class="str">"Thực hiện theo yêu cầu"</span>,      <span class="key">"value"</span>: <span class="str">"Thực hiện theo yêu cầu"</span> }
+  ],
+  <span class="key">"length"</span>: <span class="num">2</span>
+}
+<span class="cmt">// Nếu category nguồn chưa có record active → data: [], length: 0 → FE hiển thị "No data"</span></code></pre>
+    </div>
+  </div>
+  <div id="err-dd" class="tab-pane">
+    <div class="note-box warn" style="margin-bottom:8px">
+      <strong>Cột không phải dropdown/multi_select:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Cột không phải kiểu dropdown hoặc multi_select"}</code>
+    </div>
+    <div class="note-box warn">
+      <strong>Cột không tồn tại:</strong><br>
+      <code style="font-family:var(--mono);font-size:11px">{"success": false, "error": "Cột không tồn tại"}</code>
     </div>
   </div>
 </div>
